@@ -8,6 +8,7 @@ class httpParser {
     constructor(dataBuffer) {
         this.data = dataBuffer.toString();
         this.startLine = this.data.split('\r\n')[0];
+        this.userAgent = this.stringParser(this.data.split('\r\n')[2], 'User-Agent:');
         [this.httpMethod, this.httpPath, this.httpProtocol] = this.parseStartLine();
     }
 
@@ -22,18 +23,24 @@ class httpParser {
 
     parsePath(httpPath, httpProtocol) {
         if (httpPath === '/') {
-            return `${httpProtocol} 200 OK \r\n\r\n`
+            return `${httpProtocol} 200 OK \r\n\r\n`;
         } else if (httpPath.includes('/echo/')) {
             const data = this.parseContent(httpPath);
-            const responseBody = this.textAfterWord(data[0], '/echo/');
+            const responseBody = this.stringParser(data[0], '/echo/');
             const responseHeaders = `${httpProtocol} 200 OK\r\n` +
                 'Content-Type: text/plain\r\n' +
                 `Content-Length: ${responseBody.length}\r\n` +
                 '\r\n';
             return responseHeaders + responseBody;
-        }
-        else {
-            return `${httpProtocol} 404 NOT FOUND \r\n\r\n`
+        } else if (httpPath.includes('/user-agent')) {
+            const responseBody = this.userAgent;
+            const responseHeaders = `${httpProtocol} 200 OK\r\n` +
+            'Content-Type: text/plain\r\n' +
+            `Content-Length: ${responseBody.length}\r\n` +
+            '\r\n';
+            return responseHeaders + responseBody;
+        } else {
+            return `${httpProtocol} 404 NOT FOUND \r\n\r\n`;
         }
     }
 
@@ -42,11 +49,11 @@ class httpParser {
         return data;
     }
 
-    textAfterWord(text, word) {
+    stringParser(text, word) {
         const index = text.indexOf(word);
         const length = word.length;
 
-        return text.slice(index + length);
+        return text.slice(index + length).trim();
     }
 }
 
