@@ -14,17 +14,39 @@ class httpParser {
     parseStartLine() {
         // Ensure startLine is defined and not empty
         if (this.startLine) {
+            console.log(this.startLine.split(' '))
             return this.startLine.split(' ');
         }
         return [];
     }
 
-    parsePath(httpPath) {
+    parsePath(httpPath, httpProtocol) {
         if (httpPath === '/') {
-            return `HTTP/1.1 200 OK \r\n\r\n`
-        } else {
-            return `HTTP/1.1 404 NOT FOUND \r\n\r\n`
+            return `${httpProtocol} 200 OK \r\n\r\n`
+        } else if (httpPath.includes('/echo/')) {
+            const data = this.parseContent(httpPath);
+            const responseBody = this.textAfterWord(data[0], '/echo/');
+            const responseHeaders = `${httpProtocol} 200 OK\r\n` +
+                'Content-Type: text/plain\r\n' +
+                `Content-Length: ${responseBody.length}\r\n` +
+                '\r\n';
+            return responseHeaders + responseBody;
         }
+        else {
+            return `${httpProtocol} 404 NOT FOUND \r\n\r\n`
+        }
+    }
+
+    parseContent(httpPath) {
+        const data = httpPath.split(' ');
+        return data;
+    }
+
+    textAfterWord(text, word) {
+        const index = text.indexOf(word);
+        const length = word.length;
+
+        return text.slice(index + length);
     }
 }
 
